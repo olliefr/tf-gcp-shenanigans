@@ -104,3 +104,29 @@ resource "google_service_account" "admin_robot" {
     google_project_service.enabled_by_terraform,
   ]
 }
+
+# Grant the service account necessary admin roles...
+
+# The admin robot will manage the cluster infrastructure, 
+# but not their Kubernetes API objects. Thus, "Kubernetes Engine Cluster Admin"
+# role is preferred to the full "Kubernetes Engine Admin" role.
+# Predefined GKE Roles: https://cloud.google.com/kubernetes-engine/docs/how-to/iam#predefined
+#
+# The admin robot will also create and manage the service accounts
+# that the nodes will use. And this is why it is granted the "Service Account Admin" role.
+# Service Accounts roles: https://cloud.google.com/iam/docs/understanding-roles#service-accounts-roles
+
+locals {
+  admit_robot_roles = [
+    "roles/container.clusterAdmin",
+    "roles/iam.serviceAccountAdmin",
+  ]
+}
+
+resource "google_project_iam_member" "admin_robot" {
+  provider = google.seed
+  project  = var.project
+  for_each = toset(local.admit_robot_roles)
+  role     = each.key
+  member   = "serviceAccount:${google_service_account.admin_robot.email}"
+}
