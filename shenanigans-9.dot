@@ -1,0 +1,59 @@
+digraph {
+	compound = "true"
+	newrank = "true"
+	subgraph "root" {
+		"[root] data.google_client_openid_userinfo.operator (expand)" [label = "data.google_client_openid_userinfo.operator", shape = "box"]
+		"[root] data.google_service_account_access_token.operator_as_admin_robot (expand)" [label = "data.google_service_account_access_token.operator_as_admin_robot", shape = "box"]
+		"[root] google_project_iam_member.admin_robot (expand)" [label = "google_project_iam_member.admin_robot", shape = "box"]
+		"[root] google_project_iam_member.gke_main_pool_node (expand)" [label = "google_project_iam_member.gke_main_pool_node", shape = "box"]
+		"[root] google_project_service.enabled_by_terraform (expand)" [label = "google_project_service.enabled_by_terraform", shape = "box"]
+		"[root] google_project_service.long_running (expand)" [label = "google_project_service.long_running", shape = "box"]
+		"[root] google_service_account.admin_robot (expand)" [label = "google_service_account.admin_robot", shape = "box"]
+		"[root] google_service_account.gke_main_pool_node (expand)" [label = "google_service_account.gke_main_pool_node", shape = "box"]
+		"[root] google_service_account_iam_member.admin_robot_as_gke_main_pool_node (expand)" [label = "google_service_account_iam_member.admin_robot_as_gke_main_pool_node", shape = "box"]
+		"[root] google_service_account_iam_member.operator_as_admin_robot (expand)" [label = "google_service_account_iam_member.operator_as_admin_robot", shape = "box"]
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"]" [label = "provider[\"registry.terraform.io/hashicorp/google\"]", shape = "diamond"]
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" [label = "provider[\"registry.terraform.io/hashicorp/google\"].seed", shape = "diamond"]
+		"[root] provider[\"registry.terraform.io/hashicorp/time\"]" [label = "provider[\"registry.terraform.io/hashicorp/time\"]", shape = "diamond"]
+		"[root] time_sleep.iam_sync_admin_robot (expand)" [label = "time_sleep.iam_sync_admin_robot", shape = "box"]
+		"[root] time_sleep.iam_sync_gke_main_node_pool_sa (expand)" [label = "time_sleep.iam_sync_gke_main_node_pool_sa", shape = "box"]
+		"[root] var.project" [label = "var.project", shape = "note"]
+		"[root] var.region" [label = "var.region", shape = "note"]
+		"[root] var.zone" [label = "var.zone", shape = "note"]
+		"[root] data.google_client_openid_userinfo.operator (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
+		"[root] data.google_service_account_access_token.operator_as_admin_robot (expand)" -> "[root] time_sleep.iam_sync_admin_robot (expand)"
+		"[root] google_project_iam_member.admin_robot (expand)" -> "[root] google_service_account.admin_robot (expand)"
+		"[root] google_project_iam_member.admin_robot (expand)" -> "[root] local.admin_robot_roles (expand)"
+		"[root] google_project_iam_member.gke_main_pool_node (expand)" -> "[root] google_service_account.gke_main_pool_node (expand)"
+		"[root] google_project_iam_member.gke_main_pool_node (expand)" -> "[root] local.gke_main_pool_node_roles (expand)"
+		"[root] google_project_service.enabled_by_terraform (expand)" -> "[root] local.enabled_services (expand)"
+		"[root] google_project_service.enabled_by_terraform (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
+		"[root] google_project_service.long_running (expand)" -> "[root] local.long_running_services (expand)"
+		"[root] google_project_service.long_running (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
+		"[root] google_service_account.admin_robot (expand)" -> "[root] google_project_service.enabled_by_terraform (expand)"
+		"[root] google_service_account.admin_robot (expand)" -> "[root] google_project_service.long_running (expand)"
+		"[root] google_service_account.gke_main_pool_node (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"]"
+		"[root] google_service_account_iam_member.admin_robot_as_gke_main_pool_node (expand)" -> "[root] google_service_account.gke_main_pool_node (expand)"
+		"[root] google_service_account_iam_member.operator_as_admin_robot (expand)" -> "[root] data.google_client_openid_userinfo.operator (expand)"
+		"[root] google_service_account_iam_member.operator_as_admin_robot (expand)" -> "[root] google_service_account.admin_robot (expand)"
+		"[root] output.my-email (expand)" -> "[root] data.google_client_openid_userinfo.operator (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"] (close)" -> "[root] google_project_iam_member.gke_main_pool_node (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"] (close)" -> "[root] google_service_account_iam_member.admin_robot_as_gke_main_pool_node (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"]" -> "[root] data.google_service_account_access_token.operator_as_admin_robot (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"].seed (close)" -> "[root] data.google_service_account_access_token.operator_as_admin_robot (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.project"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.region"
+		"[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.zone"
+		"[root] provider[\"registry.terraform.io/hashicorp/time\"] (close)" -> "[root] time_sleep.iam_sync_gke_main_node_pool_sa (expand)"
+		"[root] root" -> "[root] output.my-email (expand)"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"] (close)"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed (close)"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/time\"] (close)"
+		"[root] time_sleep.iam_sync_admin_robot (expand)" -> "[root] google_project_iam_member.admin_robot (expand)"
+		"[root] time_sleep.iam_sync_admin_robot (expand)" -> "[root] google_service_account_iam_member.operator_as_admin_robot (expand)"
+		"[root] time_sleep.iam_sync_admin_robot (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/time\"]"
+		"[root] time_sleep.iam_sync_gke_main_node_pool_sa (expand)" -> "[root] google_project_iam_member.gke_main_pool_node (expand)"
+		"[root] time_sleep.iam_sync_gke_main_node_pool_sa (expand)" -> "[root] google_service_account_iam_member.admin_robot_as_gke_main_pool_node (expand)"
+	}
+}
+

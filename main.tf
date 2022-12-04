@@ -138,7 +138,7 @@ resource "google_project_iam_member" "admin_robot" {
   project  = var.project
   for_each = toset(local.admin_robot_roles)
   role     = each.key
-  member   = "serviceAccount:${google_service_account.admin_robot.email}"
+  member   = google_service_account.admin_robot.member
 }
 
 # The rest of deployment is done by impersonating the "admin robot" service account.
@@ -185,8 +185,7 @@ data "google_service_account_access_token" "operator_as_admin_robot" {
   # Unfortunately, this does not work and eventual consistency of IAM bites hard, with the request to the data source
   # failing with error 403 (permission denied) on the first few consequent runs.
   depends_on = [
-    google_service_account_iam_member.operator_as_admin_robot,
-    time_sleep.delay_between_iam_update_and_token_read,
+    time_sleep.iam_sync_admin_robot,
   ]
 }
 
@@ -196,10 +195,12 @@ data "google_service_account_access_token" "operator_as_admin_robot" {
 # The value of 120s was chosen empirically. It appears that IAM changes at service account level take
 # longer to propagate on average than IAM changes at project/folder/organisation level.
 # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on IAM eventual consistency
-
-resource "time_sleep" "delay_between_iam_update_and_token_read" {
+resource "time_sleep" "iam_sync_admin_robot" {
   create_duration = "120s"
-  depends_on      = [google_service_account_iam_member.operator_as_admin_robot]
+  depends_on      = [
+    google_project_iam_member.admin_robot,
+    google_service_account_iam_member.operator_as_admin_robot,
+  ]
 }
 
 # At this point all configuration that required elevated privileges has been done.
@@ -230,9 +231,12 @@ resource "google_service_account" "gke_main_pool_node" {
 # The value of 60s is an empirical observation, there is no guarantee
 # that the service account is going to be created and ready in that time.
 # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
-resource "time_sleep" "delay_between_create_account_and_set_iam_policy" {
+resource "time_sleep" "iam_sync_gke_main_node_pool_sa" {
   create_duration = "60s"
-  depends_on      = [google_service_account.gke_main_pool_node]
+  depends_on      = [
+    google_project_iam_member.gke_main_pool_node,
+    google_service_account_iam_member.admin_robot_as_gke_main_pool_node,
+  ]
 }
 
 locals {
@@ -249,18 +253,12 @@ resource "google_project_iam_member" "gke_main_pool_node" {
   project  = var.project
   for_each = toset(local.gke_main_pool_node_roles)
   role     = each.key
-  member   = "serviceAccount:${google_service_account.gke_main_pool_node.email}"
-
-  # FIXME: as referenced above, this is a hack to deal with eventual consistency. not ideal
-  depends_on = [time_sleep.delay_between_create_account_and_set_iam_policy]
+  member   = google_service_account.gke_main_pool_node.member
 }
 
 # The admin-robot service account must be allowed to use main pool nodes service account to deploy the nodes with that identity. 
 resource "google_service_account_iam_member" "admin_robot_as_gke_main_pool_node" {
   service_account_id = google_service_account.gke_main_pool_node.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${google_service_account.admin_robot.email}"
-
-  # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
-  depends_on = [time_sleep.delay_between_create_account_and_set_iam_policy]
+  member             = google_service_account.admin_robot.member
 }
