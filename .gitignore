@@ -29,4 +29,4 @@ override.tf.json
 # example: *tfplan*
 
 # The output file for "terraform graph" command is transient.
-shenanigans.dot
+shenanigans-X.dot
