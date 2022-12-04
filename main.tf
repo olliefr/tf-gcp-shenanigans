@@ -168,12 +168,13 @@ data "google_service_account_access_token" "operator_as_admin_robot" {
   ]
   lifetime = "1200s"
 
-  # TODO: this is a checkpoint to note the following...
   # Without the following explicit dependency declaration, the data source is likely to be read before the IAM policy 
   # allowing the operator to impersonate the service account is set (google_service_account_iam_member.operator_as_admin_robot)
   # This is illustrated by shenanigans-5.dot, where IAM policy setting and token acquisition are independent paths.
-  #
-  # depends_on = [
-  #   google_service_account_iam_member.operator_as_admin_robot,
-  # ]
+  # The idea here is to declare an explicit dependency on the IAM binding resource, as illustrated by shenanigans-6.dot
+  # Unfortunately, this does not work and eventual consistency of IAM bites hard, with the request to the data source
+  # failing with error 403 (permission denied) on the first few consequent runs.
+  depends_on = [
+    google_service_account_iam_member.operator_as_admin_robot,
+  ]
 }
