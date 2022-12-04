@@ -65,7 +65,6 @@ locals {
     "monitoring.googleapis.com",
   ]
   enabled_services = [
-    "compute.googleapis.com",
     "container.googleapis.com",
   ]
 }
