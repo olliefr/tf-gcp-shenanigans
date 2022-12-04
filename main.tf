@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 4.44.1"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9.1"
+    }
   }
 }
 
@@ -176,5 +180,18 @@ data "google_service_account_access_token" "operator_as_admin_robot" {
   # failing with error 403 (permission denied) on the first few consequent runs.
   depends_on = [
     google_service_account_iam_member.operator_as_admin_robot,
+    time_sleep.delay_between_iam_update_and_token_read,
   ]
+}
+
+# To work around the 403 permission denied issue related to eventual consistency of IAM,
+# we wait some time after the IAM policy had been set on the service account. This is not ideal
+# at all as IAM changes may take hours to propagate in the worst case. But it's better than nothing.
+# The value of 120s was chosen empirically. It appears that IAM changes at service account level take
+# longer to propagate on average than IAM changes at project/folder/organisation level.
+# FIXME: i hope that Terraform will have something more sophisticated in the future to wait on IAM eventual consistency
+
+resource "time_sleep" "delay_between_iam_update_and_token_read" {
+  create_duration = "120s"
+  depends_on      = [ google_service_account_iam_member.operator_as_admin_robot ]
 }
