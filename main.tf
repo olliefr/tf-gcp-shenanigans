@@ -52,6 +52,9 @@ provider "google" {
   ]
 }
 
+# Pre-requisite: "Cloud Resource Manager API" (cloudresourcemanager.googleapis.com) must be enabled
+# for Terraform to be able to manage IAM policies at project level.
+
 # Pre-requisite: "Service Usage API" (serviceusage.googleapis.com) must be enabled 
 # for Terraform to be able to manage services in a Google Cloud project.
 
@@ -119,11 +122,14 @@ resource "google_service_account" "admin_robot" {
 # The admin robot will also create and manage the service accounts
 # that the nodes will use. And this is why it is granted the "Service Account Admin" role.
 # Service Accounts roles: https://cloud.google.com/iam/docs/understanding-roles#service-accounts-roles
-
+#
+# The admin robot will be managing the permissions for the service accounts that it creates for GKE nodes. 
+# This is why it needs "Project IAM Admin" role: https://cloud.google.com/resource-manager/docs/access-control-proj#resourcemanager.projectIamAdmin
 locals {
   admin_robot_roles = [
     "roles/container.clusterAdmin",
     "roles/iam.serviceAccountAdmin",
+    "roles/resourcemanager.projectIamAdmin",
   ]
 }
 
@@ -237,11 +243,6 @@ locals {
     "roles/container.nodeServiceAccount",
   ]
 }
-
-# TODO: this fails because admin-robot service account is not allowed to manage IAM policy at project level. 
-# An easy fix would be to give it "Security Admin" role on the project, but that's too broad. Let's explore IAM conditions!
-# "Security Admin" role reference: https://cloud.google.com/iam/docs/understanding-roles#iam.securityAdmin
-# TODO: can we limit this role by condition only to service accounts and only those whose name begins with "gke-"?
 
 # Grant necessary permissions to main pool nodes at project level (GKE)
 resource "google_project_iam_member" "gke_main_pool_node" {
