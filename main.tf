@@ -72,10 +72,10 @@ locals {
 resource "google_project_service" "long_running" {
   provider = google.seed
   for_each = toset(local.long_running_services)
-  service = each.key
+  service  = each.key
 
   disable_dependent_services = false
-  disable_on_destroy = false
+  disable_on_destroy         = false
 }
 
 resource "google_project_service" "enabled_by_terraform" {
