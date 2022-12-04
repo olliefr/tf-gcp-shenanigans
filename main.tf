@@ -99,4 +99,8 @@ resource "google_service_account" "admin_robot" {
   provider    = google.seed
   account_id  = "admin-robot"
   description = "Manages task-oriented resources via Terraform"
+  depends_on = [
+    google_project_service.long_running,
+    google_project_service.enabled_by_terraform,
+  ]
 }
