@@ -121,7 +121,7 @@ resource "google_service_account" "admin_robot" {
 # Service Accounts roles: https://cloud.google.com/iam/docs/understanding-roles#service-accounts-roles
 
 locals {
-  admit_robot_roles = [
+  admin_robot_roles = [
     "roles/container.clusterAdmin",
     "roles/iam.serviceAccountAdmin",
   ]
@@ -130,7 +130,7 @@ locals {
 resource "google_project_iam_member" "admin_robot" {
   provider = google.seed
   project  = var.project
-  for_each = toset(local.admit_robot_roles)
+  for_each = toset(local.admin_robot_roles)
   role     = each.key
   member   = "serviceAccount:${google_service_account.admin_robot.email}"
 }
