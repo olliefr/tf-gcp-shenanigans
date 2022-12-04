@@ -130,3 +130,50 @@ resource "google_project_iam_member" "admin_robot" {
   role     = each.key
   member   = "serviceAccount:${google_service_account.admin_robot.email}"
 }
+
+# The rest of deployment is done by impersonating the "admin robot" service account.
+# Configure the impersonation...
+
+# Establish operator (human user) identity that was used up to this point.
+data "google_client_openid_userinfo" "operator" {
+  provider = google.seed
+}
+
+# Reveal operator identity (for convenience only).
+output "my-email" {
+  value = data.google_client_openid_userinfo.operator.email
+}
+
+# Grant the operator permission to impersonate the admin-robot service account...
+
+# Allow the operator to impersonate a specific service account (admin-robot).
+resource "google_service_account_iam_member" "operator_as_admin_robot" {
+  provider           = google.seed
+  service_account_id = google_service_account.admin_robot.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "user:${data.google_client_openid_userinfo.operator.email}"
+}
+
+# To configure service account impersonation in Terraform, we'll create a new Google provider instance,
+# with the permissions limited to those of admin-robot service account only. For this we'll need 
+# an access token.
+
+# Pre-requisite: the operator must have the "Service Account Token Creator" role on the service account.
+data "google_service_account_access_token" "operator_as_admin_robot" {
+  provider               = google.seed
+  target_service_account = google_service_account.admin_robot.email
+  scopes = [
+    "userinfo-email",
+    "cloud-platform",
+  ]
+  lifetime = "1200s"
+
+  # TODO: this is a checkpoint to note the following...
+  # Without the following explicit dependency declaration, the data source is likely to be read before the IAM policy 
+  # allowing the operator to impersonate the service account is set (google_service_account_iam_member.operator_as_admin_robot)
+  # This is illustrated by shenanigans-5.dot, where IAM policy setting and token acquisition are independent paths.
+  #
+  # depends_on = [
+  #   google_service_account_iam_member.operator_as_admin_robot,
+  # ]
+}
