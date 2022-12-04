@@ -193,7 +193,7 @@ data "google_service_account_access_token" "operator_as_admin_robot" {
 
 resource "time_sleep" "delay_between_iam_update_and_token_read" {
   create_duration = "120s"
-  depends_on      = [ google_service_account_iam_member.operator_as_admin_robot ]
+  depends_on      = [google_service_account_iam_member.operator_as_admin_robot]
 }
 
 # At this point all configuration that required elevated privileges has been done.
@@ -204,10 +204,10 @@ resource "time_sleep" "delay_between_iam_update_and_token_read" {
 # admin-robot service account. All remaining resources will be deployed using this provider...
 
 provider "google" {
-  project = var.project
-  region  = var.region
-  zone    = var.zone
-  access_token    = data.google_service_account_access_token.operator_as_admin_robot.access_token
+  project      = var.project
+  region       = var.region
+  zone         = var.zone
+  access_token = data.google_service_account_access_token.operator_as_admin_robot.access_token
 }
 
 # Example: a locked-down service account for GKE nodes...
@@ -226,7 +226,7 @@ resource "google_service_account" "gke_main_pool_node" {
 # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
 resource "time_sleep" "delay_between_create_account_and_set_iam_policy" {
   create_duration = "60s"
-  depends_on      = [ google_service_account.gke_main_pool_node ]
+  depends_on      = [google_service_account.gke_main_pool_node]
 }
 
 locals {
@@ -245,13 +245,13 @@ locals {
 
 # Grant necessary permissions to main pool nodes at project level (GKE)
 resource "google_project_iam_member" "gke_main_pool_node" {
-  project    = var.project
-  for_each   = toset(local.gke_main_pool_node_roles)
-  role       = each.key
-  member     = "serviceAccount:${google_service_account.gke_main_pool_node.email}"
-  
+  project  = var.project
+  for_each = toset(local.gke_main_pool_node_roles)
+  role     = each.key
+  member   = "serviceAccount:${google_service_account.gke_main_pool_node.email}"
+
   # FIXME: as referenced above, this is a hack to deal with eventual consistency. not ideal
-  depends_on = [ time_sleep.delay_between_create_account_and_set_iam_policy ]
+  depends_on = [time_sleep.delay_between_create_account_and_set_iam_policy]
 }
 
 # The admin-robot service account must be allowed to use main pool nodes service account to deploy the nodes with that identity. 
@@ -261,5 +261,5 @@ resource "google_service_account_iam_member" "admin_robot_as_gke_main_pool_node"
   member             = "serviceAccount:${google_service_account.admin_robot.email}"
 
   # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
-  depends_on = [ time_sleep.delay_between_create_account_and_set_iam_policy ]
+  depends_on = [time_sleep.delay_between_create_account_and_set_iam_policy]
 }
