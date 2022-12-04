@@ -27,3 +27,6 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+
+# The output file for "terraform graph" command is transient.
+shenanigans.dot
