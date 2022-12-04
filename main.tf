@@ -195,3 +195,71 @@ resource "time_sleep" "delay_between_iam_update_and_token_read" {
   create_duration = "120s"
   depends_on      = [ google_service_account_iam_member.operator_as_admin_robot ]
 }
+
+# At this point all configuration that required elevated privileges has been done.
+# From now on, the service account admin-robot will deploy the rest of the resources
+# using only the permissions assigned to it (least privilege principle applied).
+
+# To facilitate that, create the "default" Google provider instance that impersonates
+# admin-robot service account. All remaining resources will be deployed using this provider...
+
+provider "google" {
+  project = var.project
+  region  = var.region
+  zone    = var.zone
+  access_token    = data.google_service_account_access_token.operator_as_admin_robot.access_token
+}
+
+# Example: a locked-down service account for GKE nodes...
+
+# The service account for main pool nodes (GKE)
+resource "google_service_account" "gke_main_pool_node" {
+  account_id  = "gke-main-pool-node"
+  description = "Locked down account for GKE main pool nodes"
+}
+
+# Creation of service accounts is eventually consistent,
+# and that can lead to errors when you try to set IAM policies
+# on a service account immediately after having created one.
+# The value of 60s is an empirical observation, there is no guarantee
+# that the service account is going to be created and ready in that time.
+# FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
+resource "time_sleep" "delay_between_create_account_and_set_iam_policy" {
+  create_duration = "60s"
+  depends_on      = [ google_service_account.gke_main_pool_node ]
+}
+
+locals {
+  # Role assignment for the least privileged GKE node service account
+  # Use least privilege Google service accounts: https://cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster#use_least_privilege_sa
+  # "Kubernetes Engine Node Service Account" role reference: https://cloud.google.com/iam/docs/understanding-roles#container.nodeServiceAccount
+  gke_main_pool_node_roles = [
+    "roles/container.nodeServiceAccount",
+  ]
+}
+
+# TODO: this fails because admin-robot service account is not allowed to manage IAM policy at project level. 
+# An easy fix would be to give it "Security Admin" role on the project, but that's too broad. Let's explore IAM conditions!
+# "Security Admin" role reference: https://cloud.google.com/iam/docs/understanding-roles#iam.securityAdmin
+# TODO: can we limit this role by condition only to service accounts and only those whose name begins with "gke-"?
+
+# Grant necessary permissions to main pool nodes at project level (GKE)
+resource "google_project_iam_member" "gke_main_pool_node" {
+  project    = var.project
+  for_each   = toset(local.gke_main_pool_node_roles)
+  role       = each.key
+  member     = "serviceAccount:${google_service_account.gke_main_pool_node.email}"
+  
+  # FIXME: as referenced above, this is a hack to deal with eventual consistency. not ideal
+  depends_on = [ time_sleep.delay_between_create_account_and_set_iam_policy ]
+}
+
+# The admin-robot service account must be allowed to use main pool nodes service account to deploy the nodes with that identity. 
+resource "google_service_account_iam_member" "admin_robot_as_gke_main_pool_node" {
+  service_account_id = google_service_account.gke_main_pool_node.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.admin_robot.email}"
+
+  # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
+  depends_on = [ time_sleep.delay_between_create_account_and_set_iam_policy ]
+}
