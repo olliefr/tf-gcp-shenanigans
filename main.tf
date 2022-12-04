@@ -92,3 +92,11 @@ resource "google_project_service" "enabled_by_terraform" {
   # May be useful in the event that a project is long-lived but the infrastructure running in that project changes frequently.
   disable_on_destroy = true
 }
+
+# Create a service account to manage the environment...
+
+resource "google_service_account" "admin_robot" {
+  provider    = google.seed
+  account_id  = "admin-robot"
+  description = "Manages task-oriented resources via Terraform"
+}

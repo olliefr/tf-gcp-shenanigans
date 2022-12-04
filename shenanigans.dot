@@ -4,6 +4,7 @@ digraph {
         subgraph "root" {
                 "[root] google_project_service.enabled_by_terraform (expand)" [label = "google_project_service.enabled_by_terraform", shape = "box"]
                 "[root] google_project_service.long_running (expand)" [label = "google_project_service.long_running", shape = "box"]
+                "[root] google_service_account.admin_robot (expand)" [label = "google_service_account.admin_robot", shape = "box"]
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" [label = "provider[\"registry.terraform.io/hashicorp/google\"].seed", shape = "diamond"]
                 "[root] var.project" [label = "var.project", shape = "note"]
                 "[root] var.region" [label = "var.region", shape = "note"]
@@ -12,8 +13,10 @@ digraph {
                 "[root] google_project_service.enabled_by_terraform (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
                 "[root] google_project_service.long_running (expand)" -> "[root] local.long_running_services (expand)"
                 "[root] google_project_service.long_running (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
+                "[root] google_service_account.admin_robot (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed"
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed (close)" -> "[root] google_project_service.enabled_by_terraform (expand)"
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed (close)" -> "[root] google_project_service.long_running (expand)"
+                "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed (close)" -> "[root] google_service_account.admin_robot (expand)"
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.project"
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.region"
                 "[root] provider[\"registry.terraform.io/hashicorp/google\"].seed" -> "[root] var.zone"
