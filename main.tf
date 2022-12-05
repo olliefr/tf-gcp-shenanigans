@@ -172,7 +172,7 @@ resource "google_service_account_iam_member" "operator_as_admin_robot" {
 # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on IAM eventual consistency
 resource "time_sleep" "iam_sync_admin_robot" {
   create_duration = "120s"
-  depends_on      = [
+  depends_on = [
     google_project_iam_member.admin_robot,
     google_service_account_iam_member.operator_as_admin_robot,
   ]
@@ -262,7 +262,7 @@ resource "google_service_account_iam_member" "admin_robot_as_gke_main_pool_node"
 # FIXME: i hope that Terraform will have something more sophisticated in the future to wait on service accounts' eventual consistency
 resource "time_sleep" "iam_sync_gke_main_node_pool_sa" {
   create_duration = "60s"
-  depends_on      = [
+  depends_on = [
     google_project_iam_member.gke_main_pool_node,
     google_service_account_iam_member.admin_robot_as_gke_main_pool_node,
   ]
